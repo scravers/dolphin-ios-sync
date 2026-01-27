@@ -1,6 +1,7 @@
 import customtkinter
 import os
 import pygit2
+import pyperclip
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -14,12 +15,24 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.button = customtkinter.CTkButton(self, text="Get Latest Saves (Pull)", command=self.button_callback)
-        self.button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.pull_button = customtkinter.CTkButton(self, text="Get Latest Saves (Pull)", command=self.button_callback)
+        self.pull_button.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+
+        self.pull_button = customtkinter.CTkButton(self, text="Copy Public Key to Clipboard", command=self.ssh_key_copy_button_callback)
+        self.pull_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+
+        self.ssh_gen_button = customtkinter.CTkButton(self, text="Generate new SSH Keys", command=self.ssh_gen_button_callback)
+        self.ssh_gen_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
     def button_callback(self):
         print("Button Pressed")
-        print(get_public_key())
+
+    def ssh_key_copy_button_callback(self):
+        pyperclip.copy(get_public_key())
+
+    def ssh_gen_button_callback(self):
+        create_ssh_keys()
+        print("Replaced SSH Keys")
 
 
 def setup():
@@ -86,8 +99,6 @@ def get_public_key():
         return f.read()
 
 create_folder()
-
-create_ssh_keys()
 
 app = App()
 app.mainloop()

@@ -19,6 +19,7 @@ class App(customtkinter.CTk):
 
     def button_callback(self):
         print("Button Pressed")
+        print(get_public_key())
 
 
 def setup():
@@ -74,6 +75,15 @@ def create_ssh_keys():
 
     with open(public_key_path, "wb") as f:
         f.write(public_bytes)
+
+
+def get_public_key():
+    app_data_path = os.path.join(os.getenv('APPDATA'), 'DolphinSync')
+    dolphin_sync_credentials = os.path.join(app_data_path, 'Credentials')
+    public_key_path = os.path.join(dolphin_sync_credentials, "id_ed25519.pub")
+
+    with open(public_key_path, "r") as f:
+        return f.read()
 
 create_folder()
 

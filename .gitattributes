@@ -1,0 +1,4 @@
+# Treat all Wii save formats as raw binary data
+*.sav binary
+*.bin
+*.dat binary

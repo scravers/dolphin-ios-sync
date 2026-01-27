@@ -64,7 +64,7 @@ def git_push():
         env["GIT_SSH_COMMAND"] = ssh_cmd
         
         result = subprocess.run(
-            ["git", "push", "origin", "main"], 
+            ["git", "push", "origin", "main", "--force"], 
             cwd=save_location, 
             env=env,
             capture_output=True,

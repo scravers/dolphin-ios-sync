@@ -1,5 +1,6 @@
 import customtkinter
-
+import os
+import pygit2
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -18,9 +19,30 @@ class App(customtkinter.CTk):
 
 
 def setup():
-    print("Test")
+    
 
-setup()
+
+    save_location = "C:/Users/james/AppData/Roaming/Dolphin Emulator/Wii"
+    repo = pygit2.Repository(save_location)
+    print(repo)
+
+
+def create_folder():
+    # Create app data folder for saving Dolphin iOS Sync information
+    app_data_path = os.path.join(os.getenv('APPDATA'), 'DolphinSync')
+    if not os.path.exists(app_data_path):
+        os.makedirs(app_data_path)
+
+    dolphin_sync_backups = os.path.join(app_data_path, 'Backups')
+    if not os.path.exists(dolphin_sync_backups):
+        os.makedirs(dolphin_sync_backups)
+
+    dolphin_sync_credentials = os.path.join(app_data_path, 'Credentials')
+    if not os.path.exists(dolphin_sync_credentials):
+        os.makedirs(dolphin_sync_credentials)
+    
+
+create_folder()
 
 app = App()
 app.mainloop()

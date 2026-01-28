@@ -47,20 +47,36 @@ class App(customtkinter.CTk):
     #     print("Number:", dialog.get_input())
 
 
+'''
+ - Create orphan branch
+ - Add save files to that branch
+ - Commit
+ - Delete main branch
+ - Rename orphan branch to main
 
+These steps are to ensure the size of the repository stays small, with local backups being the prefered backup option.
+
+'''
 def git_push():
     save_location = "C:/Users/james/AppData/Roaming/Dolphin Emulator/Wii"
-    app_data_path = os.path.join(os.getenv('APPDATA'), 'DolphinSync')
+    app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     priv_key_path = os.path.join(app_data_path, 'Credentials', 'id_ed25519')
 
     ssh_cmd = f'ssh -i "{priv_key_path}" -o StrictHostKeyChecking=no'
     
     try:
+        
+        subprocess.run(["git", "checkout", "--orphan", "temp_branch"], cwd=save_location)
+        
         subprocess.run(["git", "add", "."], cwd=save_location, check=True)
         
         subprocess.run(["git", "commit", "-m", "Syncing saves from PC"], cwd=save_location)
-        
-        env = os.environ.copy()
+
+        subprocess.run(["git", "branch", "-D", "main"], cwd=save_location)
+
+        subprocess.run(["git", "branch", "-m", "main"], cwd=save_location)
+
+        env = os.environ.copy() 
         env["GIT_SSH_COMMAND"] = ssh_cmd
         
         result = subprocess.run(
@@ -72,7 +88,7 @@ def git_push():
         )
         
         if result.returncode == 0:
-            print("Push successful!")
+            print(f"Push successful! {result.stderr}")
         else:
             print(f"Push failed: {result.stderr}")
 
@@ -81,7 +97,7 @@ def git_push():
 
 def create_folder():
     # Create app data folder for saving Dolphin iOS Sync information
-    app_data_path = os.path.join(os.getenv('APPDATA'), 'DolphinSync')
+    app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     if not os.path.exists(app_data_path):
         os.makedirs(app_data_path)
 
@@ -111,7 +127,7 @@ def create_ssh_keys():
     )
 
     # Add to "./Dolphin iOS Sync/Credentials"
-    app_data_path = os.path.join(os.getenv('APPDATA'), 'DolphinSync')
+    app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     dolphin_sync_credentials = os.path.join(app_data_path, 'Credentials')
     private_key_path = os.path.join(dolphin_sync_credentials, "id_ed25519")
     public_key_path = os.path.join(dolphin_sync_credentials, "id_ed25519.pub")
@@ -126,7 +142,7 @@ def create_ssh_keys():
 
 
 def get_public_key():
-    app_data_path = os.path.join(os.getenv('APPDATA'), 'DolphinSync')
+    app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     dolphin_sync_credentials = os.path.join(app_data_path, 'Credentials')
     public_key_path = os.path.join(dolphin_sync_credentials, "id_ed25519.pub")
 

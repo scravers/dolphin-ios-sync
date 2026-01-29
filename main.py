@@ -7,6 +7,111 @@ import subprocess
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
+
+class SideBarFrame(customtkinter.CTkFrame):
+    def __init__(self, master, fg_color, border_color, border_width, open_dashboard, open_settings):
+        super().__init__(master)
+        self.configure(fg_color=fg_color)
+        self.configure(border_color=border_color)
+        self.configure(border_width=border_width)
+
+        self.open_dashboard = open_dashboard
+        self.open_settings = open_settings
+        
+        self.configure(corner_radius=0)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.grid(row=0, column=0, padx=(50,0), pady=(20, 20), sticky="nsw")
+
+        # Create label
+        self.label = customtkinter.CTkLabel(self, text="Dolphin iOS Sync", font=customtkinter.CTkFont(size=25, weight="bold"))
+        self.label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+
+        # Create dashboard button
+        self.dashboard_button = customtkinter.CTkButton(self, text="Dashboard", height=40, width=200, corner_radius=15, command=self.open_dashboard)
+        self.dashboard_button.grid(row=1, column=0, padx=(20,20), pady=(20, 20))
+
+        # Create settings button
+        self.settings_button = customtkinter.CTkButton(self, text="Settings", height=40, width=200, corner_radius=15, command=self.open_settings)
+        self.settings_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20))
+
+
+
+class DashboardFrame(customtkinter.CTkFrame):
+    def __init__(self, master, fg_color, border_color, border_width, git_pull_button, git_push_button, launch_dolphin):
+        super().__init__(master)
+        self.configure(fg_color=fg_color)
+        self.configure(border_color=border_color)
+        self.configure(border_width=border_width)
+
+        self.git_pull_button = git_pull_button
+        self.git_push_button = git_push_button
+        self.launch_dolphin = launch_dolphin
+        
+        self.configure(corner_radius=0)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        self.grid(row=0, column=1, padx=(0,50), pady=(20, 20), sticky="nswe")
+
+        # Create label
+        self.dashboard_label = customtkinter.CTkLabel(self, text="Dashboard", font=customtkinter.CTkFont(size=25, weight="bold"))
+        self.dashboard_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+
+        # Create sub label
+        self.dashboard_sub_label = customtkinter.CTkLabel(self, text="Ready to sync Dolphin progress", font=customtkinter.CTkFont(size=14))
+        self.dashboard_sub_label.grid(row=1, column=0, columnspan=2, padx=(0, 210), pady=(5, 0))
+
+        # Create pull button
+        self.git_pull_button = customtkinter.CTkButton(self, text="Get Latest Saves \n (Pull)", height=40, width=200, corner_radius=15, command=self.git_pull_button)
+        self.git_pull_button.grid(row=3, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+        
+        # Create push button
+        self.git_push_button = customtkinter.CTkButton(self, text="Upload Latest Save \n (Push)", height=40, width=200, corner_radius=15, command=self.git_push_button)
+        self.git_push_button.grid(row=3, column=1, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        # Create launch dolphin button
+        self.git_push_button = customtkinter.CTkButton(self, text="Launch Dolphin Emulator", height=40, width=200, corner_radius=15, command=self.launch_dolphin)
+        self.git_push_button.grid(row=4, column=0, columnspan=2, padx=(20,20), pady=(20, 20), sticky="ew")
+
+
+class SettingsFrame(customtkinter.CTkFrame):
+    def __init__(self, master, fg_color, border_color, border_width, ssh_key_copy_button, ssh_gen_button):
+        super().__init__(master)
+        self.configure(fg_color=fg_color)
+        self.configure(border_color=border_color)
+        self.configure(border_width=border_width)
+
+        self.ssh_key_copy_button = ssh_key_copy_button
+        self.ssh_gen_button = ssh_gen_button
+        
+        self.configure(corner_radius=0)
+
+        self.grid(row=0, column=1, padx=(0,50), pady=(20, 20), sticky="nswe")
+
+        # Hide settings on launch
+        self.lower()
+
+        # Create label
+        self.settings_label = customtkinter.CTkLabel(self, text="Settings", font=customtkinter.CTkFont(size=25, weight="bold"))
+        self.settings_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+
+        # Create SSH key copy button
+        self.ssh_copy_key_button = customtkinter.CTkButton(self, text="Copy Public Key to Clipboard", height=40, width=200, corner_radius=15, command=self.ssh_key_copy_button)
+        self.ssh_copy_key_button.grid(row=1, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        # Create SSH key gen button
+        self.ssh_gen_button = customtkinter.CTkButton(self, text="Generate new SSH Keys", height=40, width=200, corner_radius=15, command=self.ssh_gen_button)
+        self.ssh_gen_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        # Creaste dolphin location entry
+        self.dolphin_entry = customtkinter.CTkEntry(self, placeholder_text="Dolphin Location")
+        self.dolphin_entry.grid(row=3, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+        self.dolphin_emulator_path = self.dolphin_entry.get()
+
+
+
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -18,75 +123,34 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # Create sidebar
-        self.side_bar_frame = customtkinter.CTkFrame(self, fg_color="#080e21", corner_radius=0, border_color="#334155", border_width=1)
-        self.side_bar_frame.grid(row=0, column=0, padx=(50,0), pady=(20, 20), sticky="nsw")
 
-        # Create dashboard
-        self.dashboard_frame = customtkinter.CTkFrame(self, fg_color="#10182c", corner_radius=0, border_color="#334155", border_width=1)
-        self.dashboard_frame.grid(row=0, column=1, padx=(0,50), pady=(20, 20), sticky="nswe")
 
-        # Create settings
-        self.settings_frame = customtkinter.CTkFrame(self, fg_color="#10182c", corner_radius=0, border_color="#334155", border_width=1)
-        self.settings_frame.grid(row=0, column=1, padx=(0,50), pady=(20, 20), sticky="nswe")
-        # Hide settings on launch
-        self.settings_frame.lower()
+        # Create sidebar frame
+        self.side_bar_frame = SideBarFrame(self, fg_color="#080e21", border_color="#334155", border_width=1, 
+                                           open_dashboard=self.open_dashboard_callback, open_settings=self.open_settings_callback
+                                           )
 
-        # Create side bar label
-        self.side_bar_label = customtkinter.CTkLabel(self.side_bar_frame, text="Dolphin iOS Sync", font=customtkinter.CTkFont(size=25, weight="bold"))
-        self.side_bar_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+        # Create dashboard frame
+        self.dashboard_frame = DashboardFrame(self, fg_color="#10182c", border_color="#334155", border_width=1, 
+                                              git_pull_button=self.git_pull_button_callback, 
+                                              git_push_button=self.git_push_button_callback, 
+                                              launch_dolphin=self.launch_dolphin_callback
+                                              )
 
-        # Create dashboard label
-        self.side_bar_label = customtkinter.CTkLabel(self.dashboard_frame, text="Dashboard", font=customtkinter.CTkFont(size=25, weight="bold"))
-        self.side_bar_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
-
-        # Create dashboard sub label
-        self.side_bar_label = customtkinter.CTkLabel(self.dashboard_frame, text="Ready to sync Dolphin progress", font=customtkinter.CTkFont(size=14))
-        self.side_bar_label.grid(row=1, column=0, padx=(20, 30), pady=(5, 0))
-    
-        # Create settings label
-        self.side_bar_label = customtkinter.CTkLabel(self.settings_frame, text="Settings", font=customtkinter.CTkFont(size=25, weight="bold"))
-        self.side_bar_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
-
-        # ---------- SIDEBAR BUTTONS ----------
-        # Create dashboard button
-        self.dashboard_button = customtkinter.CTkButton(self.side_bar_frame, text="Dashboard", height=40, width=80, corner_radius=15, command=self.open_dashboard_callback)
-        self.dashboard_button.grid(row=1, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+        # Create settings frame
+        self.settings_frame = SettingsFrame(self, fg_color="#10182c", border_color="#334155", border_width=1,
+                                            ssh_key_copy_button=self.ssh_key_copy_button_callback,
+                                            ssh_gen_button=self.ssh_gen_button_callback,
+                                            )
         
-        # Create settings button
-        self.settings_button = customtkinter.CTkButton(self.side_bar_frame, text="Settings", height=40, width=80, corner_radius=15, command=self.open_settings_callback)
-        self.settings_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
-
-        # ---------- DASHBOARD BUTTONS ----------
-        # Create pull button
-        self.git_pull_button = customtkinter.CTkButton(self.dashboard_frame, text="Get Latest Saves (Pull)", height=40, width=80, corner_radius=15, command=self.git_pull_button_callback)
-        self.git_pull_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="w")
-        
-        # Create push button
-        self.git_push_button = customtkinter.CTkButton(self.dashboard_frame, text="Upload Latest Save (Push)", height=40, width=80, corner_radius=15, command=self.git_push_button_callback)
-        self.git_push_button.grid(row=3, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
-
-        # ---------- SETTINGS BUTTONS ----------
-        # Create SSH key copy button
-        self.ssh_copy_key_button = customtkinter.CTkButton(self.settings_frame, text="Copy Public Key to Clipboard", height=40, width=80, corner_radius=15, command=self.ssh_key_copy_button_callback)
-        self.ssh_copy_key_button.grid(row=1, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
-
-        # Create SSH key gen button
-        self.ssh_gen_button = customtkinter.CTkButton(self.settings_frame, text="Generate new SSH Keys", height=40, width=80, corner_radius=15, command=self.ssh_gen_button_callback)
-        self.ssh_gen_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
-
-        # self.button = customtkinter.CTkButton(self, text="Open Dialog", command=self.type_click_event)
-        # self.button.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
     def open_dashboard_callback(self):
         self.settings_frame.lower()
         self.dashboard_frame.lift()
 
-
     def open_settings_callback(self):
         self.dashboard_frame.lower()
         self.settings_frame.lift()
-
 
     def git_pull_button_callback(self):
         git_pull()
@@ -183,6 +247,10 @@ def create_folder():
     dolphin_sync_credentials = os.path.join(app_data_path, 'Credentials')
     if not os.path.exists(dolphin_sync_credentials):
         os.makedirs(dolphin_sync_credentials)
+
+    dolphin_sync_settings = os.path.join(app_data_path, 'Settings')
+    if not os.path.exists(dolphin_sync_settings):
+        os.makedirs(dolphin_sync_settings)
     
 
 def create_ssh_keys():

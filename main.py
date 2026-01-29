@@ -1,3 +1,4 @@
+import json
 import customtkinter
 import os
 import pygit2
@@ -38,7 +39,7 @@ class SideBarFrame(customtkinter.CTkFrame):
 
 
 class DashboardFrame(customtkinter.CTkFrame):
-    def __init__(self, master, fg_color, border_color, border_width, git_pull_button, git_push_button, launch_dolphin):
+    def __init__(self, master, fg_color, border_color, border_width, git_pull_button, git_push_button, launch_dolphin_button):
         super().__init__(master)
         self.configure(fg_color=fg_color)
         self.configure(border_color=border_color)
@@ -46,7 +47,7 @@ class DashboardFrame(customtkinter.CTkFrame):
 
         self.git_pull_button = git_pull_button
         self.git_push_button = git_push_button
-        self.launch_dolphin = launch_dolphin
+        self.launch_dolphin_button = launch_dolphin_button
         
         self.configure(corner_radius=0)
         self.grid_columnconfigure(0, weight=1)
@@ -63,20 +64,20 @@ class DashboardFrame(customtkinter.CTkFrame):
         self.dashboard_sub_label.grid(row=1, column=0, columnspan=2, padx=(0, 210), pady=(5, 0))
 
         # Create pull button
-        self.git_pull_button = customtkinter.CTkButton(self, text="Get Latest Saves \n (Pull)", height=40, width=200, corner_radius=15, command=self.git_pull_button)
+        self.git_pull_button = customtkinter.CTkButton(self, text="Download Cloud Saves \n (Pull)", height=150, width=200, corner_radius=15, command=self.git_pull_button)
         self.git_pull_button.grid(row=3, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
         
         # Create push button
-        self.git_push_button = customtkinter.CTkButton(self, text="Upload Latest Save \n (Push)", height=40, width=200, corner_radius=15, command=self.git_push_button)
+        self.git_push_button = customtkinter.CTkButton(self, text="Upload Local Saves \n (Push)", height=150, width=200, corner_radius=15, command=self.git_push_button)
         self.git_push_button.grid(row=3, column=1, padx=(20,20), pady=(20, 20), sticky="ew")
 
         # Create launch dolphin button
-        self.git_push_button = customtkinter.CTkButton(self, text="Launch Dolphin Emulator", height=40, width=200, corner_radius=15, command=self.launch_dolphin)
-        self.git_push_button.grid(row=4, column=0, columnspan=2, padx=(20,20), pady=(20, 20), sticky="ew")
+        self.launch_dolphin_button = customtkinter.CTkButton(self, text="Launch Dolphin Emulator", height=40, width=200, corner_radius=15, command=self.launch_dolphin_button)
+        self.launch_dolphin_button.grid(row=4, column=0, columnspan=2, padx=(20,20), pady=(20, 20), sticky="ew")
 
 
 class SettingsFrame(customtkinter.CTkFrame):
-    def __init__(self, master, fg_color, border_color, border_width, ssh_key_copy_button, ssh_gen_button):
+    def __init__(self, master, fg_color, border_color, border_width, ssh_key_copy_button, ssh_gen_button, dolphin_select_button, SETTINGS_FILE, settings_json):
         super().__init__(master)
         self.configure(fg_color=fg_color)
         self.configure(border_color=border_color)
@@ -84,6 +85,9 @@ class SettingsFrame(customtkinter.CTkFrame):
 
         self.ssh_key_copy_button = ssh_key_copy_button
         self.ssh_gen_button = ssh_gen_button
+        self.dolphin_select_button = dolphin_select_button
+        self.SETTINGS_FILE = SETTINGS_FILE
+        self.settings_json = settings_json
         
         self.configure(corner_radius=0)
 
@@ -91,6 +95,10 @@ class SettingsFrame(customtkinter.CTkFrame):
 
         # Hide settings on launch
         self.lower()
+
+        # Create entry string 
+        self.entry_str = customtkinter.StringVar(value=self.settings_json.get("dolphin_path"))
+        self.entry_str.trace_add("write", self.on_type)
 
         # Create label
         self.settings_label = customtkinter.CTkLabel(self, text="Settings", font=customtkinter.CTkFont(size=25, weight="bold"))
@@ -105,9 +113,19 @@ class SettingsFrame(customtkinter.CTkFrame):
         self.ssh_gen_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
 
         # Creaste dolphin location entry
-        self.dolphin_entry = customtkinter.CTkEntry(self, placeholder_text="Dolphin Location")
+        self.dolphin_entry = customtkinter.CTkEntry(self, textvariable=self.entry_str)
         self.dolphin_entry.grid(row=3, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
-        self.dolphin_emulator_path = self.dolphin_entry.get()
+
+        # Create dolphin file select button
+        self.dolphin_select_button = customtkinter.CTkButton(self, text="Select Dolphin Path", height=40, width=200, corner_radius=15, command=self.dolphin_select_button)
+        self.dolphin_select_button.grid(row=3, column=1, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        
+    def on_type(self, *args):
+        self.settings_json["dolphin_path"] = self.entry_str.get()
+        with open(self.SETTINGS_FILE, "w") as f:
+            json.dump(self.settings_json, f, indent=4)
+        
 
 
 
@@ -123,7 +141,8 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-
+        self.SETTINGS_FILE = os.path.join(os.path.join(os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync'), 'Settings'), 'settings.json')
+        self.settings_json = self.load_settings()
 
         # Create sidebar frame
         self.side_bar_frame = SideBarFrame(self, fg_color="#080e21", border_color="#334155", border_width=1, 
@@ -134,14 +153,23 @@ class App(customtkinter.CTk):
         self.dashboard_frame = DashboardFrame(self, fg_color="#10182c", border_color="#334155", border_width=1, 
                                               git_pull_button=self.git_pull_button_callback, 
                                               git_push_button=self.git_push_button_callback, 
-                                              launch_dolphin=self.launch_dolphin_callback
+                                              launch_dolphin_button=self.launch_dolphin_button_callback
                                               )
 
         # Create settings frame
         self.settings_frame = SettingsFrame(self, fg_color="#10182c", border_color="#334155", border_width=1,
                                             ssh_key_copy_button=self.ssh_key_copy_button_callback,
                                             ssh_gen_button=self.ssh_gen_button_callback,
+                                            dolphin_select_button=self.dolphin_select_button_callback,
+                                            SETTINGS_FILE=self.SETTINGS_FILE,
+                                            settings_json=self.settings_json
                                             )
+        
+
+    def load_settings(self):
+        with open(self.SETTINGS_FILE, "r") as f:
+            return json.load(f)
+        f.close()
         
 
     def open_dashboard_callback(self):
@@ -165,6 +193,31 @@ class App(customtkinter.CTk):
         create_ssh_keys()
         print("Replaced SSH Keys")
 
+    def launch_dolphin_button_callback(self):
+        print("Dolphin Path: ", self.settings_json.get("dolphin_path"))
+        try:
+            self.dolphin_process = subprocess.Popen([self.settings_json.get("dolphin_path")])
+            self.dashboard_frame.launch_dolphin_button.configure(state="disabled", text="Dolphin is Running...")
+
+            self.check_dolphin_status()
+        except subprocess.CalledProcessError as e:
+            print(f"Error launching Dolphin: {e}")
+
+    def dolphin_select_button_callback(self):
+        folder_selected = customtkinter.filedialog.askopenfilename(
+            title="Select Dolphin Emulator exe",
+            initialdir="/"
+        )
+
+        if folder_selected:
+            self.settings_frame.entry_str.set(folder_selected)
+
+    def check_dolphin_status(self):
+        if self.dolphin_process.poll() is None:
+            self.after(1000, self.check_dolphin_status)
+        else:
+            self.dashboard_frame.launch_dolphin_button.configure(state="normal", text="Launch Dolphin Emulator")
+
     # def type_click_event(self):
     #     dialog = customtkinter.CTkInputDialog(text="Type in a number:", title="Test")
     #     print("Number:", dialog.get_input())
@@ -184,19 +237,17 @@ def git_pull():
     except subprocess.CalledProcessError as e:
         print(f"Error during git operation: {e}")
 
-
-
-'''
- - Create orphan branch
- - Add save files to that branch
- - Commit
- - Delete main branch
- - Rename orphan branch to main
-
-These steps are to ensure the size of the repository stays small, with local backups being the prefered backup option.
-
-'''
 def git_push():
+    '''
+    - Create orphan branch
+    - Add save files to that branch
+    - Commit
+    - Delete main branch
+    - Rename orphan branch to main
+
+    These steps are to ensure the size of the repository stays small, with local backups being the prefered backup option.
+
+    '''
     save_location = "C:/Users/james/AppData/Roaming/Dolphin Emulator/Wii"
     app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     priv_key_path = os.path.join(app_data_path, 'Credentials', 'id_ed25519')
@@ -234,7 +285,7 @@ def git_push():
     except subprocess.CalledProcessError as e:
         print(f"Error during git operation: {e}")
 
-def create_folder():
+def create_folders():
     # Create app data folder for saving Dolphin iOS Sync information
     app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     if not os.path.exists(app_data_path):
@@ -251,7 +302,14 @@ def create_folder():
     dolphin_sync_settings = os.path.join(app_data_path, 'Settings')
     if not os.path.exists(dolphin_sync_settings):
         os.makedirs(dolphin_sync_settings)
-    
+
+    settings_json = os.path.join(dolphin_sync_settings, 'settings.json')
+    if not os.path.exists(settings_json):
+        default_data = {"dolphin_path": "", "last_sync": "Never"}
+        with open(settings_json, "w") as f:
+            json.dump(default_data, f, indent=4)
+
+        f.close()
 
 def create_ssh_keys():
     # Generate and serialize the private key
@@ -283,7 +341,6 @@ def create_ssh_keys():
     with open(public_key_path, "wb") as f:
         f.write(public_bytes)
 
-
 def get_public_key():
     app_data_path = os.path.join(os.getenv('APPDATA'), 'Dolphin iOS Sync')
     dolphin_sync_credentials = os.path.join(app_data_path, 'Credentials')
@@ -292,7 +349,7 @@ def get_public_key():
     with open(public_key_path, "r") as f:
         return f.read()
 
-create_folder()
+create_folders()
 
 app = App()
 app.mainloop()

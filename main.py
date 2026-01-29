@@ -13,24 +13,83 @@ class App(customtkinter.CTk):
 
         self.title("Dolphin iOS Sync")
         self.geometry("800x600")
-        self.grid_columnconfigure(0, weight=1)
+        self.configure(fg_color="#020617")
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # self.pull_button = customtkinter.CTkButton(self, text="Get Latest Saves (Pull)", command=self.button_callback)
-        # self.pull_button.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        # Create sidebar
+        self.side_bar_frame = customtkinter.CTkFrame(self, fg_color="#080e21", corner_radius=0, border_color="#334155", border_width=1)
+        self.side_bar_frame.grid(row=0, column=0, padx=(50,0), pady=(20, 20), sticky="nsw")
 
-        self.git_push_button = customtkinter.CTkButton(self, text="Upload Latest Save (Push)", command=self.git_push_button_callback)
-        self.git_push_button.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        # Create dashboard
+        self.dashboard_frame = customtkinter.CTkFrame(self, fg_color="#10182c", corner_radius=0, border_color="#334155", border_width=1)
+        self.dashboard_frame.grid(row=0, column=1, padx=(0,50), pady=(20, 20), sticky="nswe")
 
-        self.ssh_copy_key_button = customtkinter.CTkButton(self, text="Copy Public Key to Clipboard", command=self.ssh_key_copy_button_callback)
-        self.ssh_copy_key_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        # Create settings
+        self.settings_frame = customtkinter.CTkFrame(self, fg_color="#10182c", corner_radius=0, border_color="#334155", border_width=1)
+        self.settings_frame.grid(row=0, column=1, padx=(0,50), pady=(20, 20), sticky="nswe")
+        # Hide settings on launch
+        self.settings_frame.lower()
 
-        self.ssh_gen_button = customtkinter.CTkButton(self, text="Generate new SSH Keys", command=self.ssh_gen_button_callback)
-        self.ssh_gen_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        # Create side bar label
+        self.side_bar_label = customtkinter.CTkLabel(self.side_bar_frame, text="Dolphin iOS Sync", font=customtkinter.CTkFont(size=25, weight="bold"))
+        self.side_bar_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+
+        # Create dashboard label
+        self.side_bar_label = customtkinter.CTkLabel(self.dashboard_frame, text="Dashboard", font=customtkinter.CTkFont(size=25, weight="bold"))
+        self.side_bar_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+
+        # Create dashboard sub label
+        self.side_bar_label = customtkinter.CTkLabel(self.dashboard_frame, text="Ready to sync Dolphin progress", font=customtkinter.CTkFont(size=14))
+        self.side_bar_label.grid(row=1, column=0, padx=(20, 30), pady=(5, 0))
+    
+        # Create settings label
+        self.side_bar_label = customtkinter.CTkLabel(self.settings_frame, text="Settings", font=customtkinter.CTkFont(size=25, weight="bold"))
+        self.side_bar_label.grid(row=0, column=0, padx=(20, 30), pady=(40, 0), sticky="w")
+
+        # ---------- SIDEBAR BUTTONS ----------
+        # Create dashboard button
+        self.dashboard_button = customtkinter.CTkButton(self.side_bar_frame, text="Dashboard", height=40, width=80, corner_radius=15, command=self.open_dashboard_callback)
+        self.dashboard_button.grid(row=1, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+        
+        # Create settings button
+        self.settings_button = customtkinter.CTkButton(self.side_bar_frame, text="Settings", height=40, width=80, corner_radius=15, command=self.open_settings_callback)
+        self.settings_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        # ---------- DASHBOARD BUTTONS ----------
+        # Create pull button
+        self.git_pull_button = customtkinter.CTkButton(self.dashboard_frame, text="Get Latest Saves (Pull)", height=40, width=80, corner_radius=15, command=self.git_pull_button_callback)
+        self.git_pull_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="w")
+        
+        # Create push button
+        self.git_push_button = customtkinter.CTkButton(self.dashboard_frame, text="Upload Latest Save (Push)", height=40, width=80, corner_radius=15, command=self.git_push_button_callback)
+        self.git_push_button.grid(row=3, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        # ---------- SETTINGS BUTTONS ----------
+        # Create SSH key copy button
+        self.ssh_copy_key_button = customtkinter.CTkButton(self.settings_frame, text="Copy Public Key to Clipboard", height=40, width=80, corner_radius=15, command=self.ssh_key_copy_button_callback)
+        self.ssh_copy_key_button.grid(row=1, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
+
+        # Create SSH key gen button
+        self.ssh_gen_button = customtkinter.CTkButton(self.settings_frame, text="Generate new SSH Keys", height=40, width=80, corner_radius=15, command=self.ssh_gen_button_callback)
+        self.ssh_gen_button.grid(row=2, column=0, padx=(20,20), pady=(20, 20), sticky="ew")
 
         # self.button = customtkinter.CTkButton(self, text="Open Dialog", command=self.type_click_event)
         # self.button.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
+    def open_dashboard_callback(self):
+        self.settings_frame.lower()
+        self.dashboard_frame.lift()
+
+
+    def open_settings_callback(self):
+        self.dashboard_frame.lower()
+        self.settings_frame.lift()
+
+
+    def git_pull_button_callback(self):
+        git_pull()
 
     def git_push_button_callback(self):
         git_push()
@@ -45,6 +104,22 @@ class App(customtkinter.CTk):
     # def type_click_event(self):
     #     dialog = customtkinter.CTkInputDialog(text="Type in a number:", title="Test")
     #     print("Number:", dialog.get_input())
+
+
+def git_pull():
+    save_location = "C:/Users/james/AppData/Roaming/Dolphin Emulator/Wii"
+
+    
+    try:
+        
+        subprocess.run(["git", "fetch", "origin"], cwd=save_location)
+
+        subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=save_location)
+
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error during git operation: {e}")
+
 
 
 '''
